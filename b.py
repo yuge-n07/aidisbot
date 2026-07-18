@@ -5,8 +5,15 @@ import json
 import time
 import random
 import logging
+import types
 
-# --- discord.py 1.7.3 (no Intents) ---
+# --- Patch cgi for aiohttp (Python 3.14 compatibility) ---
+# (Not strictly needed on Railway's Python 3.11, but harmless)
+dummy_cgi = types.ModuleType('cgi')
+dummy_cgi.FieldStorage = lambda *args, **kwargs: None
+sys.modules['cgi'] = dummy_cgi
+
+# --- Import discord (1.7.3) ---
 try:
     import discord
     from discord.ext import commands
@@ -22,7 +29,7 @@ except ImportError:
     print("❌ groq not installed. Run: pip install groq")
     sys.exit(1)
 
-# --- Environment variables ---
+# --- Get token and Groq keys from environment ---
 def get_token():
     token = os.environ.get("TOKEN")
     if token:
@@ -33,12 +40,14 @@ def get_token():
 def get_groq_keys():
     keys_str = os.environ.get("GROQ_KEYS")
     if keys_str:
+        # Try JSON first
         try:
             keys = json.loads(keys_str)
             if isinstance(keys, list) and keys:
                 return keys
         except:
             pass
+        # Comma-separated
         if ',' in keys_str:
             keys = [k.strip() for k in keys_str.split(',') if k.strip()]
             if keys:
@@ -65,7 +74,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Bot setup (NO Intents, NO self_bot) ---
-bot = commands.Bot(command_prefix="!")
+# CRITICAL: bot=False tells discord.py to treat the token as a user token.
+bot = commands.Bot(command_prefix="!", bot=False)
 
 # --- Key rotation ---
 current_key_index = 0
