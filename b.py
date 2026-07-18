@@ -1,23 +1,12 @@
 import os
-import asyncio
 import discord
 from discord.ext import commands
 
-# --- Token ---
 TOKEN = os.environ.get("TOKEN", "").strip()
 if not TOKEN:
     raise RuntimeError("Missing TOKEN environment variable")
 
-# --- Fix for Python 3.14 event loop issue ---
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
-
-# --- Bot setup (self_bot=True) ---
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents, self_bot=True)
+bot = commands.Bot(command_prefix="!")
 
 @bot.event
 async def on_ready():
